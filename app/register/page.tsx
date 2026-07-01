@@ -1,16 +1,28 @@
-import { registerSenior } from "./actions";
+"use client";
 
-const REGIONS = [
-  "서울", "경기", "인천", "강원", "충북", "충남", "대전", "세종",
-  "전북", "전남", "광주", "경북", "경남", "대구", "울산", "부산", "제주",
-];
+import { useActionState } from "react";
+import Link from "next/link";
+import { registerSenior, type RegisterState } from "./actions";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
-const JOB_TYPES = [
-  "사무보조", "매장관리/판매", "요양보호/돌봄", "경비/시설관리",
-  "배달/운전", "급식/조리보조", "상담/안내", "기타",
-];
+const REGIONS = ["서울", "경기", "인천", "기타"];
+const JOB_TYPES = ["경비", "청소", "조리", "돌봄", "기타"];
+
+const initialState: RegisterState = { success: false, errors: {} };
 
 export default function RegisterPage() {
+  const [state, formAction, pending] = useActionState(registerSenior, initialState);
+
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-md p-8 space-y-8">
@@ -21,72 +33,111 @@ export default function RegisterPage() {
           <p className="text-xl text-gray-600">일자리 매칭을 위한 정보를 입력해 주세요</p>
         </div>
 
-        <form action={registerSenior} className="space-y-6">
+        {state.success && (
+          <Alert className="border-green-500 bg-green-50 space-y-2">
+            <AlertDescription className="text-lg font-semibold text-green-800">
+              등록이 완료되었습니다
+            </AlertDescription>
+            {state.seniorId && (
+              <Link
+                href={`/recommendations?senior_id=${state.seniorId}`}
+                className="inline-block text-green-800 underline font-semibold"
+              >
+                내 추천 일자리 보기
+              </Link>
+            )}
+          </Alert>
+        )}
+
+        {state.errors.form && (
+          <Alert variant="destructive">
+            <AlertDescription className="text-lg font-semibold">
+              {state.errors.form}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <form action={formAction} className="space-y-6">
 
           <div className="space-y-2">
-            <label htmlFor="name" className="text-xl font-semibold text-gray-800">이름</label>
-            <input
+            <Label htmlFor="name" className="text-xl font-semibold text-gray-800">이름</Label>
+            {state.errors.name && (
+              <Alert variant="destructive">
+                <AlertDescription className="text-base font-semibold">
+                  {state.errors.name}
+                </AlertDescription>
+              </Alert>
+            )}
+            <Input
               id="name"
               name="name"
               type="text"
-              required
               placeholder="이름을 입력하세요"
-              className="w-full h-14 bg-white rounded-xl border-2 border-gray-300 px-4 text-gray-900 text-lg focus:outline-none focus:border-blue-500"
+              className="h-14 text-lg"
             />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="region" className="text-xl font-semibold text-gray-800">지역</label>
-            <select
-              id="region"
-              name="region"
-              required
-              defaultValue=""
-              className="w-full h-14 bg-white rounded-xl border-2 border-gray-300 px-4 text-gray-900 text-lg focus:outline-none focus:border-blue-500"
-            >
-              <option value="" disabled>거주 지역을 선택하세요</option>
-              {REGIONS.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
+            <Label htmlFor="region" className="text-xl font-semibold text-gray-800">지역</Label>
+            {state.errors.region && (
+              <Alert variant="destructive">
+                <AlertDescription className="text-base font-semibold">
+                  {state.errors.region}
+                </AlertDescription>
+              </Alert>
+            )}
+            <Select name="region">
+              <SelectTrigger id="region" className="h-14 w-full text-lg">
+                <SelectValue placeholder="거주 지역을 선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {REGIONS.map((r) => (
+                  <SelectItem key={r} value={r} className="text-lg">{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="desired_job" className="text-xl font-semibold text-gray-800">희망 직종</label>
-            <select
-              id="desired_job"
-              name="desired_job"
-              required
-              defaultValue=""
-              className="w-full h-14 bg-white rounded-xl border-2 border-gray-300 px-4 text-gray-900 text-lg focus:outline-none focus:border-blue-500"
-            >
-              <option value="" disabled>희망하는 직종을 선택하세요</option>
-              {JOB_TYPES.map((j) => (
-                <option key={j} value={j}>{j}</option>
-              ))}
-            </select>
+            <Label htmlFor="desired_job" className="text-xl font-semibold text-gray-800">희망 직종</Label>
+            {state.errors.desired_job && (
+              <Alert variant="destructive">
+                <AlertDescription className="text-base font-semibold">
+                  {state.errors.desired_job}
+                </AlertDescription>
+              </Alert>
+            )}
+            <Select name="desired_job">
+              <SelectTrigger id="desired_job" className="h-14 w-full text-lg">
+                <SelectValue placeholder="희망하는 직종을 선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {JOB_TYPES.map((j) => (
+                  <SelectItem key={j} value={j} className="text-lg">{j}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="career_years" className="text-xl font-semibold text-gray-800">경력 (년)</label>
-            <input
+            <Label htmlFor="career_years" className="text-xl font-semibold text-gray-800">경력 (년)</Label>
+            <Input
               id="career_years"
               name="career_years"
               type="number"
               min={0}
               defaultValue={0}
-              required
-              placeholder="경력 연수를 입력하세요"
-              className="w-full h-14 bg-white rounded-xl border-2 border-gray-300 px-4 text-gray-900 text-lg focus:outline-none focus:border-blue-500"
+              className="h-14 text-lg"
             />
           </div>
 
-          <button
+          <Button
             type="submit"
-            className="w-full h-16 bg-blue-600 hover:bg-blue-700 rounded-xl flex items-center justify-center text-white text-2xl font-bold transition-colors"
+            disabled={pending}
+            className="w-full h-16 text-2xl font-bold rounded-xl"
           >
-            등록하기
-          </button>
+            {pending ? "저장 중..." : "등록하기"}
+          </Button>
 
         </form>
       </div>
