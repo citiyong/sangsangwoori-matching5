@@ -5,10 +5,33 @@ const REGION_SCORE = 3;
 const JOB_TYPE_SCORE = 2;
 const CAREER_SCORE = 1;
 
+// 매칭 점수 계산 시 비교용으로만 쓰는 정규화. seniors/jobs 원본 값은 그대로 둔다.
+// SQL의 normalize_region / normalize_job_type 함수와 규칙을 동일하게 맞춰야 한다.
+const REGION_ALIASES: Record<string, string> = {
+  "서울특별시": "서울",
+  "경기도": "경기",
+  "인천광역시": "인천",
+};
+
+const JOB_TYPE_ALIASES: Record<string, string> = {
+  "경비직": "경비",
+  "청소직": "청소",
+  "조리직": "조리",
+  "돌봄직": "돌봄",
+};
+
+function normalizeRegion(region: string): string {
+  return REGION_ALIASES[region] ?? region;
+}
+
+function normalizeJobType(jobType: string): string {
+  return JOB_TYPE_ALIASES[jobType] ?? jobType;
+}
+
 function calcScore(senior: Pick<Senior, "region" | "desired_job" | "career_years">, job: Pick<Job, "region" | "job_type" | "required_career">) {
   let score = 0;
-  if (senior.region === job.region) score += REGION_SCORE;
-  if (senior.desired_job === job.job_type) score += JOB_TYPE_SCORE;
+  if (normalizeRegion(senior.region) === normalizeRegion(job.region)) score += REGION_SCORE;
+  if (normalizeJobType(senior.desired_job) === normalizeJobType(job.job_type)) score += JOB_TYPE_SCORE;
   if (senior.career_years >= job.required_career) score += CAREER_SCORE;
   return score;
 }
